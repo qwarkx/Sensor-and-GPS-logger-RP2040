@@ -90,16 +90,6 @@ def Initialise_SD_CARD( spi_interface, sd_cs_pin, sd_path = '/sd', timeout = 2):
 
     return False, 0, 0
 
-'''
-def SD_Auto_Init():
-	if (SD_AutoInit > 2000 and SD_init_status == 0):
-		SD_AutoInit = 0
-		status = Initialise_SD_CARD()
-		if (status == True):
-			SD_init_status = 1
-		elif (status == False):
-			SD_init_status = 0
-'''
 
 def SDtimer_interrupt_callback(timer):
     global pin_sd_card_connected
@@ -257,6 +247,11 @@ def main():
 
     status, sd_path, other = Initialise_SD_CARD(spi, sd_cs, '/sd', timeout=2)
 
+    if status:
+        sd_card_init_required = 0
+    else:
+        sd_card_init_required = 1
+
     print('Storage interface Finished config')
 
     '''
@@ -324,6 +319,9 @@ def main():
     time.sleep(2)
 
     while True:
+
+        if pin_sd_card_connected == 0 and sd_card_init_required == 1:
+
 
         if SD_Write_data:
             LED.value(1)
