@@ -14,7 +14,7 @@ import uctypes as c
 import sdcard
 from sensor_IMU import GY_86
 from bmp180 import BMP180
-from data_packet import *
+#from data_packet import *
 import itertools as it
 
 
@@ -49,10 +49,9 @@ sample_counter = 0
 sens_RDY_flag = 1
 
 SD_write_data_started = 0
-pin_int_sd_write = 0
-
-message_updater_millis = 0
+SD_fileName_flags = 0
 SD_Write_data = 0
+pin_int_sd_write = 0
 
 pin_sd_card_connected = 0
 sd_card_init_required = 0
@@ -79,8 +78,7 @@ def Initialise_SD_CARD( spi_interface, sd_cs_pin, sd_path = '/sd', timeout = 2):
             sd_card_init_required = 1
             status = False
 
-        print('Storage interface Finished config')
-        time.sleep(3)
+        time.sleep(1)
 
         if status == False:
             time.sleep_ms(400)
@@ -134,49 +132,85 @@ log_file_name = ""
 
 def generate_log_file_name():
     global log_file_name
-    log_file_name_generator = ("DATA_{:03d}.bin".format(i) for i in itertools.count(1))
+    log_file_name_generator = ("DATA_{:03d}.bin".format(i) for i in it.count(1))
     log_file_name = next(log_file_name_generator)
     l_name = log_file_name
     return l_name
 
-def set_log_file_name(sd_path):
-    global log_file_name
-    generate_log_file_name()
-    while log_file_name in uos.listdir(sd_path):
-        name = generate_log_file_name()
-    return name
+def file_or_dir_exists(filename, path):
+    try:
+        if filename in uos.listdir(path):
+            return True
+        else:
+            return False
+    except OSError:
+        return False
 
+
+def set_log_file_name(sd_path='/sd'):
+    global log_file_name
+
+    log_file_name_generator = ("DATA_{:03d}.bin".format(i) for i in it.count(1))
+    log_file_name = next(log_file_name_generator)
+
+    while file_or_dir_exists(log_file_name, sd_path):
+        log_file_name = next(log_file_name_generator)
+
+    return log_file_name
+
+'''
+def set_log_file_name(sd_path = '/sd'):
+    global log_file_name
+    name = ''
+    generate_log_file_name()
+    print(log_file_name)
+    # print(uos.listdir(sd_path))
+    # print(file_or_dir_exists(log_file_name, sd_path))
+
+    while file_or_dir_exists(log_file_name, sd_path):
+        name = generate_log_file_name()
+        print(log_file_name)
+
+    print(log_file_name)
+    return name
+'''
 # Example usage
 #set_log_file_name()
 #print(log_file_name)
 
 
 
-def SD_Write_Start_Stop_control( sd_path, sensor_data):
+def SD_Write_Start_Stop_control( sensor_data, sd_path = '/sd'):
     global SD_write_data_started
     global SD_fileName_flags
-    global SD_fileName
+    global log_file_name
     global SD_fileOpen_flags
+    global SD_Write_data
     # SD_init_status
     # Generate name of the file
+    myFile = None
 
     if SD_write_data_started == 0 and SD_fileName_flags == 0:
-        print('SD start failed')
+        # print('SD start failed')
+        SD_Write_data = 0
         return 0
     elif SD_write_data_started == 1 and SD_fileName_flags == 0:
         set_log_file_name(sd_path)
-        myFile = open(sd_path + '/' + SD_fileName, 'wb')
+        file_path = sd_path + '/' + log_file_name
+        print(file_path)
+        myFile = open(file_path, 'wb')
         print('SD data write started')
         SD_fileName_flags = 1
         SD_fileOpen_flags = 1
+        SD_Write_data = 1
 
     # Open the file for data write
     if SD_write_data_started == 1 and SD_fileName_flags == 1 and SD_fileOpen_flags == 1:
         myFile.write(sensor_data)
-
-    if SD_write_data_started == 0 and SD_fileName_flags == 1 and SD_fileOpen_flags == 1:
+    elif SD_write_data_started == 0 and SD_fileName_flags == 1 and SD_fileOpen_flags == 1:
         SD_fileName_flags = 0
         SD_fileOpen_flags = 0
+        myFile.flush()
         myFile.close()
 
 
@@ -207,11 +241,11 @@ def main():
 
     # SD card setup
     print('* Initialising SD CARD ...')
-    SD_CARD_CS = const(15)
+    SD_CARD_CS = 15
     sd_cs = Pin(SD_CARD_CS, Pin.OUT)
 
     global sd_card_init_required
-    global status, sd_path, other
+    #global status, sd_path, other
 
     spi = machine.SPI(id=1,
                       baudrate=1000000,
@@ -223,7 +257,9 @@ def main():
                       mosi=machine.Pin(11),
                       miso=machine.Pin(12))
 
-    status, sd_path, other = 0
+    status = bool
+    sd_path = ''
+    other = 0
     status, sd_path, other = Initialise_SD_CARD(spi, sd_cs, '/sd', timeout=2)
 
     if status:
@@ -233,30 +269,8 @@ def main():
 
     print('Storage interface Finished config')
 
-    '''
-    adc = ADC(0)
-    with open('/sd/adcData.txt', "w") as f:
-        while True:
-            x = adc.read_u16()  # Replace this line with a sensor reading of your choosing
-            t = time.ticks_ms() / 1000
-            f.write(str(t))  # Write time sample was taken in seconds
-            f.write(' ')  # A space
-            f.write(str(x))  # Write sample data
-            f.write('\n')  # A new line
-            f.flush()  # Force writing of buffered data to the SD card
-            print(t, x)
-            time.sleep_ms(500)
-    '''
-
     time.sleep(3)
 
-    # // Try to initialize card
-    '''
-    if Initialise_SD_CARD():
-        SD_init_status = 1
-    else:
-        SD_init_status = 0
-    '''
     # //-----------------------------------------------------------------------------------
 
     # // SETUP Barometer tio get altitude
@@ -280,8 +294,8 @@ def main():
  
 
     # OTHER initialisations
-    buffer_size = 100
-    buffer = CircularBuffer(buffer_size)
+    #buffer_size = 100
+    #buffer = CircularBuffer(buffer_size)
 
 
     imu_sens_data = bytearray(20)
@@ -358,7 +372,7 @@ def main():
                                 gps_sens_data[3],
                                 gps_sens_data[4])
 
-            SD_Write_Start_Stop_control(sd_path, data)
+            SD_Write_Start_Stop_control(data)
 
             sample_counter += 1
 
