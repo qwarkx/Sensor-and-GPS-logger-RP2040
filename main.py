@@ -2,7 +2,7 @@
 
 from machine import SPI, I2C, Pin, Timer
 import machine
-
+# from machine import SDCard
 import os
 import uos
 import time
@@ -14,7 +14,7 @@ import uctypes as c
 import sdcard
 from sensor_IMU import GY_86
 from bmp180 import BMP180
-from data_class import *
+from data_packet import *
 import itertools as it
 
 
@@ -57,20 +57,18 @@ SD_Write_data = 0
 pin_sd_card_connected = 0
 sd_card_init_required = 0
 
-'''
-def Initialise_SD_CARD( timeout = 2, spi_interface, sd_cs_pin):
-    global sd_cs
+
+def Initialise_SD_CARD( spi_interface, sd_cs_pin, sd_path = '/sd', timeout = 2):
     global sd_card_init_required
 
+    sd_mount_point = sd_path
     init_timeout = 0
     status = False
 
     while init_timeout < timeout:
         try:
             sd = sdcard.SDCard(spi_interface, sd_cs_pin)
-            uos.mount(sd, '/sd2')
-            # uos.listdir('/')
-            print(uos.listdir('/'))
+            uos.mount(sd, sd_mount_point)
 
             sd_card_init_required = 0
             status = True
@@ -88,9 +86,10 @@ def Initialise_SD_CARD( timeout = 2, spi_interface, sd_cs_pin):
             time.sleep_ms(400)
             init_timeout += 1
         elif status == True:
-            return True
-    return False
-'''
+            return True, sd_mount_point, 0
+
+    return False, 0, 0
+
 '''
 def SD_Auto_Init():
 	if (SD_AutoInit > 2000 and SD_init_status == 0):
@@ -240,7 +239,7 @@ def main():
     # //-----------------------------------------------------------------------------------
 
     # SD card setup
-
+    print('* Initialising SD CARD ...')
     SD_CARD_CS = const(15)
     sd_cs = Pin(SD_CARD_CS, Pin.OUT)
 
@@ -256,25 +255,26 @@ def main():
                       mosi=machine.Pin(11),
                       miso=machine.Pin(12))
 
-    try:
-        sd = sdcard.SDCard(spi, sd_cs)
-        uos.mount(sd, '/sd2')
-        uos.listdir('/')
+    status, sd_path, other = Initialise_SD_CARD(spi, sd_cs, '/sd', timeout=2)
 
-        sd_card_init_required = 0
-        print('SD card initialised')
-    except Exception as e:
-        print('Not able to initialised SD card')
-        sd_card_init_required = 1
-    
     print('Storage interface Finished config')
-    time.sleep(3)
-    
-    
 
-    #print(sd)
-    # Set all SD data to 0xFF
-    # memset(&sd_data, 0xFF, sizeof(sd_data)) ;
+    '''
+    adc = ADC(0)
+    with open('/sd/adcData.txt', "w") as f:
+        while True:
+            x = adc.read_u16()  # Replace this line with a sensor reading of your choosing
+            t = time.ticks_ms() / 1000
+            f.write(str(t))  # Write time sample was taken in seconds
+            f.write(' ')  # A space
+            f.write(str(x))  # Write sample data
+            f.write('\n')  # A new line
+            f.flush()  # Force writing of buffered data to the SD card
+            print(t, x)
+            time.sleep_ms(500)
+    '''
+
+    time.sleep(3)
 
     # // Try to initialize card
     '''
