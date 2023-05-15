@@ -1,4 +1,4 @@
-
+import struct
 
 from machine import SPI, I2C, Pin, Timer
 import machine
@@ -48,8 +48,8 @@ sample_counter = 0
 
 sens_RDY_flag = 1
 
-SD_write_data_started_stopped = 0
-pin_int_center = 0
+SD_write_data_started = 0
+pin_int_sd_write = 0
 
 message_updater_millis = 0
 SD_Write_data = 0
@@ -61,14 +61,14 @@ sd_card_init_required = 0
 def Initialise_SD_CARD( spi_interface, sd_cs_pin, sd_path = '/sd', timeout = 2):
     global sd_card_init_required
 
-    sd_mount_point = sd_path
+    sd_mount_path = sd_path
     init_timeout = 0
     status = False
 
     while init_timeout < timeout:
         try:
-            sd = sdcard.SDCard(spi_interface, sd_cs_pin)
-            uos.mount(sd, sd_mount_point)
+            sd_card_class = sdcard.SDCard(spi_interface, sd_cs_pin)
+            uos.mount(sd_card_class, sd_mount_path)
 
             sd_card_init_required = 0
             status = True
@@ -86,10 +86,9 @@ def Initialise_SD_CARD( spi_interface, sd_cs_pin, sd_path = '/sd', timeout = 2):
             time.sleep_ms(400)
             init_timeout += 1
         elif status == True:
-            return True, sd_mount_point, 0
+            return True, sd_mount_path, 0
 
     return False, 0, 0
-
 
 def SDtimer_interrupt_callback(timer):
     global pin_sd_card_connected
@@ -120,16 +119,14 @@ imu_int.irq(trigger=Pin.IRQ_RISING, handler=read_IMU_sensor)
 
 # // PIN INTERRUPT HANDLING FUNCTIONS
 def start_logging_button(pin):
-    global pin_int_center
-    if pin_int_center == 0:
-        pin_int_center = 1
-    elif pin_int_center == 1:
-        pin_int_center = 0
+    global SD_write_data_started
+    if SD_write_data_started == 0:
+        SD_write_data_started = 1
+    elif SD_write_data_started == 1:
+        SD_write_data_started = 0
 # Button interrupts
 user_control = Pin(INT_CENTER_BUTTON, machine.Pin.IN, machine.Pin.PULL_UP)
 user_control.irq(trigger=Pin.IRQ_FALLING, handler=start_logging_button)
-
-
 
 
 # FILE NAME HANDLING
@@ -142,10 +139,10 @@ def generate_log_file_name():
     l_name = log_file_name
     return l_name
 
-def set_log_file_name(sd_class):
+def set_log_file_name(sd_path):
     global log_file_name
     generate_log_file_name()
-    while sd_class.exists(log_file_name):
+    while log_file_name in uos.listdir(sd_path):
         name = generate_log_file_name()
     return name
 
@@ -154,59 +151,39 @@ def set_log_file_name(sd_class):
 #print(log_file_name)
 
 
-'''
-def SD_Write_Start_Stop_control( sd_conrol_class):
-	# SD_init_status
-	# Generate name of the file
-	if (SD_write_data_started_stopped):
-		SD_write_data_started_stopped = 0
-		print('SD data write stopped')
-	else:
-		SD_fileName_flags = setLOG_file_name()
-		if SD_fileName_flags:
-			SD_write_data_started_stopped = 1
-			print('SD data write started')
-		else:
-			print('SD start failed')
 
-	# Open the file for data write
-	if (SD_write_data_started_stopped == 1):
+def SD_Write_Start_Stop_control( sd_path, sensor_data):
+    global SD_write_data_started
+    global SD_fileName_flags
+    global SD_fileName
+    global SD_fileOpen_flags
+    # SD_init_status
+    # Generate name of the file
 
-		# try:
+    if SD_write_data_started == 0 and SD_fileName_flags == 0:
+        print('SD start failed')
+        return 0
+    elif SD_write_data_started == 1 and SD_fileName_flags == 0:
+        set_log_file_name(sd_path)
+        myFile = open(sd_path + '/' + SD_fileName, 'wb')
+        print('SD data write started')
+        SD_fileName_flags = 1
+        SD_fileOpen_flags = 1
 
-		# except Exception as e:
+    # Open the file for data write
+    if SD_write_data_started == 1 and SD_fileName_flags == 1 and SD_fileOpen_flags == 1:
+        myFile.write(sensor_data)
 
-		myFile = sd_conrol_class.open(SD_fileName, 'wb')
+    if SD_write_data_started == 0 and SD_fileName_flags == 1 and SD_fileOpen_flags == 1:
+        SD_fileName_flags = 0
+        SD_fileOpen_flags = 0
+        myFile.close()
 
-		if myFile:
-			SD_fileOpen_flags = 0
-			SD_write_data_started_stopped = 0
-		else:
-			SD_fileOpen_flags = 1
-			myFile.write((uint8_t * ) & sd_data, sizeof(sd_data))
-			myFile.close()
-			SD_fileOpen_flags = 0
-			SD_write_data_started_stopped = 1
 
-	if (SD_write_data_started_stopped == 1):
-		myFile = SD.open(SD_fileName, FILE_WRITE)
-		if (!myFile):
-			SD_fileOpen_flags = 0
-			SD_write_data_started_stopped = 0
-		else:
-			SD_fileOpen_flags = 1
-		SD_write_data_started_stopped = 1
-
-	else:
-		myFile.close()
-		SD_fileOpen_flags = 0
-'''
-#pin_int_center = 0
 
 #data_structure = SD_DataHandler() # possible error source
 
 # OTHER initialisations
-
 
 def main():
 
@@ -234,6 +211,7 @@ def main():
     sd_cs = Pin(SD_CARD_CS, Pin.OUT)
 
     global sd_card_init_required
+    global status, sd_path, other
 
     spi = machine.SPI(id=1,
                       baudrate=1000000,
@@ -245,6 +223,7 @@ def main():
                       mosi=machine.Pin(11),
                       miso=machine.Pin(12))
 
+    status, sd_path, other = 0
     status, sd_path, other = Initialise_SD_CARD(spi, sd_cs, '/sd', timeout=2)
 
     if status:
@@ -321,7 +300,7 @@ def main():
     while True:
 
         if pin_sd_card_connected == 0 and sd_card_init_required == 1:
-
+            status, sd_path, other = Initialise_SD_CARD(spi, sd_cs, '/sd', timeout=2)
 
         if SD_Write_data:
             LED.value(1)
@@ -349,6 +328,7 @@ def main():
         # message_updater_millis = 0
         # if GPS_Serial.read_GPS():
         # // GPS related information
+        gps_sens_data = (0,1,2,3,4,5)
         # gps_sens_data = (GPS_Serial.numSV, GPS_Serial.fixType, GPS_Serial.hMSL/1000.0f, GPS_Serial.gSpeed*0.0036f, GPS_Serial.lon/10000000.0f, GPS_Serial.lat/10000000.0f)
 
         # FILL the BUFFER
@@ -358,10 +338,30 @@ def main():
             imu_sens_data = imu.read_sensors()
 
             # print(time_stamp, packet_counter, sample_counter, imu_sens_data, baro_sens_data)
-            #buffer.add_data(timestamp, packet_counter, imu_sens_data, baro_sens_data, gps_data)
-            
+            # buffer.add_data(time_stamp, packet_counter, imu_sens_data, baro_sens_data, gps_sens_data)
+
+            data = struct.pack('IHIHHHHHHHHHHfffBBdddd', time_stamp, sample_counter, sample_counter,
+                                imu_sens_data[0],
+                                imu_sens_data[1],
+                                imu_sens_data[2],
+                                imu_sens_data[4],
+                                imu_sens_data[5],
+                                imu_sens_data[6],
+                                imu_sens_data[7],
+                                imu_sens_data[8],
+                                imu_sens_data[9],
+                                imu_sens_data[3],
+                                baro_sens_data[0], baro_sens_data[1], baro_sens_data[2],
+                                gps_sens_data[0],
+                                gps_sens_data[1],
+                                gps_sens_data[2],
+                                gps_sens_data[3],
+                                gps_sens_data[4])
+
+            SD_Write_Start_Stop_control(sd_path, data)
+
             sample_counter += 1
 
 
 if __name__ == '__main__':
-	main()
+    main()
