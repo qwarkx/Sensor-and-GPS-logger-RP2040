@@ -56,6 +56,7 @@ pin_int_sd_write = 0
 pin_sd_card_connected = 0
 sd_card_init_required = 0
 
+myFile = None
 
 def Initialise_SD_CARD( spi_interface, sd_cs_pin, sd_path = '/sd', timeout = 2):
     global sd_card_init_required
@@ -186,9 +187,10 @@ def SD_Write_Start_Stop_control( sensor_data, sd_path = '/sd'):
     global log_file_name
     global SD_fileOpen_flags
     global SD_Write_data
+    global myFile
     # SD_init_status
     # Generate name of the file
-    myFile = None
+
 
     if SD_write_data_started == 0 and SD_fileName_flags == 0:
         # print('SD start failed')
@@ -198,6 +200,7 @@ def SD_Write_Start_Stop_control( sensor_data, sd_path = '/sd'):
         set_log_file_name(sd_path)
         file_path = sd_path + '/' + log_file_name
         print(file_path)
+
         myFile = open(file_path, 'wb')
         print('SD data write started')
         SD_fileName_flags = 1
@@ -206,12 +209,17 @@ def SD_Write_Start_Stop_control( sensor_data, sd_path = '/sd'):
 
     # Open the file for data write
     if SD_write_data_started == 1 and SD_fileName_flags == 1 and SD_fileOpen_flags == 1:
+        # print('write')
         myFile.write(sensor_data)
+
     elif SD_write_data_started == 0 and SD_fileName_flags == 1 and SD_fileOpen_flags == 1:
         SD_fileName_flags = 0
         SD_fileOpen_flags = 0
-        myFile.flush()
-        myFile.close()
+        # print('up')
+        if myFile is not None:
+            # print('close')
+            myFile.flush()
+            myFile.close()
 
 
 
