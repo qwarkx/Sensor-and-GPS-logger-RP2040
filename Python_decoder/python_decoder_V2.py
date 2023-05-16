@@ -3,8 +3,6 @@ import functools
 import ctypes
 from ctypes import string_at, byref, sizeof, cast, POINTER, pointer, create_string_buffer, memmove
 
-import pandas as pd
-
 from PIL import Image, ImageDraw
 
 import struct
