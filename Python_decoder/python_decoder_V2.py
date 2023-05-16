@@ -36,7 +36,7 @@ from other_functions import *
         uint16_t imu_temp[100];
     
         // Barometric presur
-        float baro_presure_raw[10];
+        # float baro_presure_raw[10];
         float baro_presure_calculated[10];
         float baro_temp[10];
         float baro_calculated_altitude[10];
