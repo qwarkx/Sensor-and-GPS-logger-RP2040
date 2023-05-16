@@ -99,7 +99,7 @@ class CircularBuffer:
                                  gps_long=[],
                                  gps_lat=[]) for _ in range(buffer_size)]
 
-    def add_data(self, timestamp: c.int32_t, packet_count: c.int16_t, sample_counter: c.int32_t, imu_data: list[c.uint16_t], baro_data: list[float], gps_data: list[]):
+    def add_data(self, timestamp: c.int32_t, packet_count: c.int16_t, sample_counter: c.int32_t, imu_data: list[c.uint16_t], baro_data: list[float], gps_data: []):
         data_point = self.buffer[self.current_index]
         data_point.add_data_experimental(timestamp, packet_count, sample_counter, imu_data, baro_data, gps_data)
 
