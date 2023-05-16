@@ -19,12 +19,14 @@ from other_functions import *
 """
     struct sd_data_handler{
         uint32_t timestamp;
-        uint32_t packet_count;
+        uint16_t sample_counter;
+        uint32_t packet_counter;
+        
     
         //  Movement sensor data
-        uint16_t gyiro_x[100];
-        uint16_t gyiro_y[100];
-        uint16_t gyiro_z[100];
+        uint16_t gyro_x[100];
+        uint16_t gyro_y[100];
+        uint16_t gyro_z[100];
     
         uint16_t acc_x[100];
         uint16_t acc_y[100];
@@ -33,19 +35,20 @@ from other_functions import *
         uint16_t mag_x[100];
         uint16_t mag_y[100];
         uint16_t mag_z[100];
+        uint16_t imu_temp[100];
     
         // Barometric presur
-        uint16_t presure_raw[10];
-        uint16_t presure_calculated[10];
-        uint16_t temperature[10];
-        uint16_t calculated_altitude[10];
+        float baro_presure_raw[10];
+        float baro_presure_calculated[10];
+        float baro_temp[10];
+        float baro_calculated_altitude[10];
     
         //  GPS_Data packet
-        uint8_t num_satelites;
-        uint8_t fix_type;
+        uint8_t gps_num_satelites;
+        uint8_t gps_fix_type;
     
-        double hight_abobe_see_level;
-        double ground_speed;
+        double gps_hight_abobe_see_level;
+        double gps_ground_speed;
         
         double gps_long;
         double gps_lat;
