@@ -3,6 +3,8 @@ import functools
 import ctypes
 from ctypes import string_at, byref, sizeof, cast, POINTER, pointer, create_string_buffer, memmove
 
+import pandas as pd
+
 from PIL import Image, ImageDraw
 
 import struct
@@ -17,14 +19,12 @@ from other_functions import *
 """
     struct sd_data_handler{
         uint32_t timestamp;
-        uint16_t sample_counter;
-        uint32_t packet_counter;
-        
+        uint32_t packet_count;
     
         //  Movement sensor data
-        uint16_t gyro_x[100];
-        uint16_t gyro_y[100];
-        uint16_t gyro_z[100];
+        uint16_t gyiro_x[100];
+        uint16_t gyiro_y[100];
+        uint16_t gyiro_z[100];
     
         uint16_t acc_x[100];
         uint16_t acc_y[100];
@@ -33,20 +33,19 @@ from other_functions import *
         uint16_t mag_x[100];
         uint16_t mag_y[100];
         uint16_t mag_z[100];
-        uint16_t imu_temp[100];
     
         // Barometric presur
-        # float baro_presure_raw[10];
-        float baro_presure_calculated[10];
-        float baro_temp[10];
-        float baro_calculated_altitude[10];
+        uint16_t presure_raw[10];
+        uint16_t presure_calculated[10];
+        uint16_t temperature[10];
+        uint16_t calculated_altitude[10];
     
         //  GPS_Data packet
-        uint8_t gps_num_satelites;
-        uint8_t gps_fix_type;
+        uint8_t num_satelites;
+        uint8_t fix_type;
     
-        double gps_hight_abobe_see_level;
-        double gps_ground_speed;
+        double hight_abobe_see_level;
+        double ground_speed;
         
         double gps_long;
         double gps_lat;
@@ -110,20 +109,24 @@ def main():
 
         gps_data = tuple(zip(latitude, longitude))
 
-        GYx = removeDC(np.array(full_data[0:, 3], dtype='i2')/2000)
-        GYy = removeDC(np.array(full_data[0:, 4], dtype='i2')/2000)
-        GYz = removeDC(np.array(full_data[0:, 5], dtype='i2')/2000)
+        ACCx = removeDC(np.array(full_data[0:, 3], dtype='i2')/8)
+        ACCy = removeDC(np.array(full_data[0:, 4], dtype='i2')/8)
+        ACCz = removeDC(np.array(full_data[0:, 5], dtype='i2')/8)
 
-        ACCx = removeDC(np.array(full_data[0:, 6], dtype='i2')/8)
-        ACCy = removeDC(np.array(full_data[0:, 7], dtype='i2')/8)
-        ACCz = removeDC(np.array(full_data[0:, 8], dtype='i2')/8)
+        GYx = removeDC(np.array(full_data[0:, 6], dtype='i2')/2000)
+        GYy = removeDC(np.array(full_data[0:, 7], dtype='i2')/2000)
+        GYz = removeDC(np.array(full_data[0:, 8], dtype='i2')/2000)
 
         MAGx = removeDC(np.array(full_data[0:, 9], dtype='i2') )
         MAGy = removeDC(np.array(full_data[0:, 10], dtype='i2') )
         MAGz = removeDC(np.array(full_data[0:, 11], dtype='i2') )
 
-        GYRO_all = removeDC(np.array([full_data[0:, 3], full_data[0:, 4], full_data[0:, 5]], dtype='i2') / 2000)
-        ACC_all = removeDC(np.array([full_data[0:, 6], full_data[0:, 7], full_data[0:, 8]], dtype='i2') / 8)
+        imu_temp = np.array(full_data[0:, 12], dtype='i2')/340 + 36.53
+        baro_temp = np.array(full_data[0:, 13], dtype='f')
+        baro_altitude = np.array(full_data[0:, 15], dtype='f')
+
+        ACC_all = removeDC(np.array([full_data[0:, 3], full_data[0:, 4], full_data[0:, 5]], dtype='i2') / 8)
+        GYRO_all = removeDC(np.array([full_data[0:, 6], full_data[0:, 7], full_data[0:, 8]], dtype='i2') / 2000)
         MAG_all = removeDC(np.array([full_data[0:, 9], full_data[0:, 10], full_data[0:, 11]], dtype='i2') )
 
         plt.subplot(2,3,1)
@@ -134,8 +137,12 @@ def main():
         plt.subplot(2,3,2)
         plt.title('Other Details')
         plt.plot(timestamp, speed)
-        plt.plot(timestamp,see_hight)
-        plt.legend( ['Speed km/h', 'Seelevel hight'], loc="best")
+        plt.plot(timestamp, see_hight)
+        plt.plot(timestamp, imu_temp)
+        plt.plot(timestamp, baro_temp)
+        plt.plot(timestamp, baro_altitude)
+
+        plt.legend( ['Speed km/h', 'Seelevel hight', 'Imu temp', 'Baro Temp', 'Baro Altitude'], loc="best")
         plt.grid()
 
         plt.subplot(2,3,3)
@@ -171,6 +178,12 @@ def main():
         plt.legend(['ACCx', 'ACCy', 'ACCz'], loc="best")
         plt.grid()
         plt.show()
+
+        fig = plt.gcf()
+        manager = plt.get_current_fig_manager()
+        # Set the plot to full screen
+        manager.full_screen_toggle()
+
         plt.savefig(file_name + '.png', dpi=640)
         plt.show()
 
