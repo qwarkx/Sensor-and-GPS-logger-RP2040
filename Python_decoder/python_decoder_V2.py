@@ -35,7 +35,7 @@ from other_functions import *
         uint16_t mag_z[100];
     
         // Barometric presur
-        uint16_t presure_raw[10];
+        # uint16_t presure_raw[10];
         uint16_t presure_calculated[10];
         uint16_t temperature[10];
         uint16_t calculated_altitude[10];
@@ -125,6 +125,9 @@ def main():
         baro_temp = np.array(full_data[0:, 13], dtype='f')
         baro_altitude = np.array(full_data[0:, 15], dtype='f')
 
+        gps_num_satelit = np.array(full_data[0:, 16], dtype='i1')
+        gps_fix_type = np.array(full_data[0:, 17], dtype='i1')
+
         ACC_all = removeDC(np.array([full_data[0:, 3], full_data[0:, 4], full_data[0:, 5]], dtype='i2') / 8)
         GYRO_all = removeDC(np.array([full_data[0:, 6], full_data[0:, 7], full_data[0:, 8]], dtype='i2') / 2000)
         MAG_all = removeDC(np.array([full_data[0:, 9], full_data[0:, 10], full_data[0:, 11]], dtype='i2') )
@@ -141,8 +144,10 @@ def main():
         plt.plot(timestamp, imu_temp)
         plt.plot(timestamp, baro_temp)
         plt.plot(timestamp, baro_altitude)
+        plt.plot(timestamp, gps_num_satelit)
+        plt.plot(timestamp, gps_fix_type)
 
-        plt.legend( ['Speed km/h', 'Seelevel hight', 'Imu temp', 'Baro Temp', 'Baro Altitude'], loc="best")
+        plt.legend( ['Speed km/h', 'Seelevel hight', 'Imu temp', 'Baro Temp', 'Baro Altitude', 'GPS Num Satelit', 'GPS Fix Type'], loc="best")
         plt.grid()
 
         plt.subplot(2,3,3)
@@ -179,10 +184,10 @@ def main():
         plt.grid()
         plt.show()
 
-        fig = plt.gcf()
-        manager = plt.get_current_fig_manager()
+        # fig = plt.gcf()
+        # manager = plt.ge_current_fig_manager()
         # Set the plot to full screen
-        manager.full_screen_toggle()
+        # manager.full_screen_toggle()
 
         plt.savefig(file_name + '.png', dpi=640)
         plt.show()
