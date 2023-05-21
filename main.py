@@ -1,6 +1,6 @@
 import struct
 
-from machine import SPI, I2C, Pin, Timer
+from machine import SPI, I2C, UART, Pin, Timer
 import machine
 # from machine import SDCard
 import os
@@ -12,6 +12,7 @@ import uctypes as c
 
 #from dataclasses import dataclass
 import sdcard
+from ublox_GPS import GPS
 from sensor_IMU import GY_86
 from bmp180 import BMP180
 #from data_packet import *
@@ -235,13 +236,15 @@ def main():
 
     print('* Initialising GPS ...')
 
-    # uart_com_gps = UART(1, baudrate = 115200, tx = Pin(8), rx = Pin(9))
-    # GPS_Serial = GPS(uart_com_gps)
-    # time.sleep(1)
-    # gp.read_GPS()
+    gps_baudrate = 19200
+    # gps_baudrate = 115200
+    uart_com_gps = UART(1, baudrate = gps_baudrate, tx = Pin(8), rx = Pin(9))
+    GPS_Serial = GPS(uart_com_gps)
+    time.sleep(1)
 
-    # print(gp.lat)
-    # print(gp.gps_data_raw[1])
+    GPS_Serial.read_GPS()
+    print(GPS_Serial.lon)
+    print(GPS_Serial.lat)
 
     # // posible to increase the speed of GPS to 5Hz
     # GPS_Serial.write(UBLOX_INIT, sizeof(UBLOX_INIT));
@@ -348,10 +351,10 @@ def main():
         # USE GPS to read data from the module
         # if (message_updater_millis > 200):
         # message_updater_millis = 0
-        # if GPS_Serial.read_GPS():
-        # // GPS related information
-        gps_sens_data = (0,1,2,3,4,5)
-        # gps_sens_data = (GPS_Serial.numSV, GPS_Serial.fixType, GPS_Serial.hMSL/1000.0f, GPS_Serial.gSpeed*0.0036f, GPS_Serial.lon/10000000.0f, GPS_Serial.lat/10000000.0f)
+        if GPS_Serial.read_GPS():
+            # // GPS related information
+            # gps_sens_data = (0,1,2,3,4,5)
+            gps_sens_data = (GPS_Serial.numSV, GPS_Serial.fixType, GPS_Serial.hMSL/1000.0, GPS_Serial.gSpeed*0.0036, GPS_Serial.lon/10000000.0, GPS_Serial.lat/10000000.0)
 
         # FILL the BUFFER
         if sens_RDY_flag == 1:
@@ -363,22 +366,13 @@ def main():
             # buffer.add_data(time_stamp, packet_counter, imu_sens_data, baro_sens_data, gps_sens_data)
 
             data = struct.pack('IHIHHHHHHHHHHfffBBdddd', time_stamp, sample_counter, sample_counter,
-                                imu_sens_data[0],
-                                imu_sens_data[1],
-                                imu_sens_data[2],
-                                imu_sens_data[4],
-                                imu_sens_data[5],
-                                imu_sens_data[6],
-                                imu_sens_data[7],
-                                imu_sens_data[8],
-                                imu_sens_data[9],
+                                imu_sens_data[0], imu_sens_data[1], imu_sens_data[2],
+                                imu_sens_data[4], imu_sens_data[5], imu_sens_data[6],
+                                imu_sens_data[7], imu_sens_data[8], imu_sens_data[9],
                                 imu_sens_data[3],
                                 baro_sens_data[0], baro_sens_data[1], baro_sens_data[2],
-                                gps_sens_data[0],
-                                gps_sens_data[1],
-                                gps_sens_data[2],
-                                gps_sens_data[3],
-                                gps_sens_data[4])
+                                gps_sens_data[0], gps_sens_data[1], gps_sens_data[2],
+                                gps_sens_data[3], gps_sens_data[4])
 
             SD_Write_Start_Stop_control(data)
 

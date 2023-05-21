@@ -96,7 +96,7 @@ class GPS():
         while(self.gps_seriall.any()):
             self.gps_data_raw = self.gps_seriall.read()
             
-            if self.ubx_NAV_PVT(gps_data_raw):
+            if self.ubx_NAV_PVT(self.gps_data_raw):
                 return 1
             else:
                 return 0 
@@ -128,17 +128,17 @@ class GPS():
             check2 = (check1 + check2) % 256
 
         result = [check1, check2]
-        print(result)
+        # print(result)
         return result
 
 
 
 # GPS Testing
 
-uart_com = UART(1, baudrate = 115200, tx = Pin(8), rx = Pin(9))
-gp = GPS(uart_com)
-
-while True:
+# uart_com = UART(1, baudrate = 115200, tx = Pin(8), rx = Pin(9))
+# gp = GPS(uart_com)
+#
+# while True:
     
     '''
     gps.update()
@@ -149,12 +149,12 @@ while True:
                                                                                                 gps.satellites,
                                                                                                 gps.altitude_m))
     '''
-    gp.read_GPS()
-    
-    print(gp.lat)
-    print(gp.gps_data_raw[1])
-        
-    utime.sleep(1)
+    # gp.read_GPS()
+    #
+    # print(gp.lat)
+    # print(gp.gps_data_raw[1])
+    #
+    # utime.sleep(1)
 
 
 
