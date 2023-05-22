@@ -65,7 +65,7 @@ def main():
         # packet_structure = 'II50H50H50H50H50H50H50H50H50H10H10H10H10HBBdddd'
         # packet_structure = 'II20H20H20H20H20H20H20H20H20H10H10H10H10HBBdddd'
         # packet_structure = 'IIHHHHHHHHHHHHHBBdddd'
-        packet_structure = 'IHIHHHHHHHHHHfffBBdddd'
+        packet_structure =   'IHIHHHHHHHHHHfffBBdddd'
         structure_size = struct.calcsize(packet_structure)
 
         # data_package_size = 1920

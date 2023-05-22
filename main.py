@@ -221,6 +221,9 @@ def SD_Write_Start_Stop_control( sensor_data, sd_path = '/sd'):
             # print('close')
             myFile.flush()
             myFile.close()
+        
+        print('SD data write finished')
+            
 
 
 
@@ -228,16 +231,21 @@ def SD_Write_Start_Stop_control( sensor_data, sd_path = '/sd'):
 
 # OTHER initialisations
 
+baro_sens_data = []
+gps_sens_data = []
+
+
 def main():
 
     time.sleep(3)
     
     LED = Pin(25, machine.Pin.OUT)
-
+    LED.value(1)
+    
     print('* Initialising GPS ...')
 
-    gps_baudrate = 19200
-    # gps_baudrate = 115200
+    #gps_baudrate = 19200
+    gps_baudrate = 115200
     uart_com_gps = UART(1, baudrate = gps_baudrate, tx = Pin(8), rx = Pin(9))
     GPS_Serial = GPS(uart_com_gps)
     time.sleep(1)
@@ -321,6 +329,8 @@ def main():
     global pin_sd_card_connected
     # // Desyncrhonize the beeps
     time.sleep(2)
+    
+    LED.value(0)
 
     while True:
 
@@ -341,28 +351,21 @@ def main():
             print(e)
             LED.value(1)
 
-
-
-        # // TRY to AUTOmaticaly initialise SD card
-        #if SD_init_status == 0:
-        # SD_Auto_Init()
-
-
         # USE GPS to read data from the module
         # if (message_updater_millis > 200):
-        # message_updater_millis = 0
         if GPS_Serial.read_GPS():
             # // GPS related information
-            # gps_sens_data = (0,1,2,3,4,5)
             gps_sens_data = (GPS_Serial.numSV, GPS_Serial.fixType, GPS_Serial.hMSL/1000.0, GPS_Serial.gSpeed*0.0036, GPS_Serial.lon/10000000.0, GPS_Serial.lat/10000000.0)
-
+            #print(gps_sens_data)
+            
         # FILL the BUFFER
         if sens_RDY_flag == 1:
             
             time_stamp = time.ticks_us()
             imu_sens_data = imu.read_sensors()
 
-            # print(time_stamp, packet_counter, sample_counter, imu_sens_data, baro_sens_data)
+            #print(time_stamp, packet_counter, sample_counter, imu_sens_data, baro_sens_data)
+            
             # buffer.add_data(time_stamp, packet_counter, imu_sens_data, baro_sens_data, gps_sens_data)
 
             data = struct.pack('IHIHHHHHHHHHHfffBBdddd', time_stamp, sample_counter, sample_counter,
@@ -375,7 +378,7 @@ def main():
                                 gps_sens_data[3], gps_sens_data[4])
 
             SD_Write_Start_Stop_control(data)
-
+            #time.sleep(1)
             sample_counter += 1
 
 

@@ -134,11 +134,12 @@ class GPS():
 
 
 # GPS Testing
+#gps_baudrate = 115200
 
-# uart_com = UART(1, baudrate = 115200, tx = Pin(8), rx = Pin(9))
-# gp = GPS(uart_com)
+#uart_com = UART(1, baudrate = gps_baudrate, tx = Pin(8), rx = Pin(9))
+#gp = GPS(uart_com)
 #
-# while True:
+#while True:
     
     '''
     gps.update()
@@ -149,12 +150,13 @@ class GPS():
                                                                                                 gps.satellites,
                                                                                                 gps.altitude_m))
     '''
-    # gp.read_GPS()
+    #gp.read_GPS()
     #
-    # print(gp.lat)
-    # print(gp.gps_data_raw[1])
+    #print(gp.lat)
+    #print(gp.lon)
+    #print(gp.gps_data_raw)
     #
-    # utime.sleep(1)
+    #utime.sleep(1)
 
 
 
