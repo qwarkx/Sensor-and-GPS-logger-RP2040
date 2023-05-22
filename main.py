@@ -375,7 +375,7 @@ def main():
                                 imu_sens_data[3],
                                 baro_sens_data[0], baro_sens_data[1], baro_sens_data[2],
                                 gps_sens_data[0], gps_sens_data[1], gps_sens_data[2],
-                                gps_sens_data[3], gps_sens_data[4])
+                                gps_sens_data[3], gps_sens_data[4], gps_sens_data[5])
 
             SD_Write_Start_Stop_control(data)
             #time.sleep(1)

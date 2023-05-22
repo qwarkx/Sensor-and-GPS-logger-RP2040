@@ -20,7 +20,8 @@ from other_functions import *
     struct sd_data_handler{
         uint32_t timestamp;
         uint32_t packet_count;
-    
+        uint32_t packet_count;
+        
         //  Movement sensor data
         uint16_t gyiro_x[100];
         uint16_t gyiro_y[100];
@@ -33,9 +34,9 @@ from other_functions import *
         uint16_t mag_x[100];
         uint16_t mag_y[100];
         uint16_t mag_z[100];
+        uint16_t imu_temp;
     
         // Barometric presur
-        # uint16_t presure_raw[10];
         uint16_t presure_calculated[10];
         uint16_t temperature[10];
         uint16_t calculated_altitude[10];
@@ -56,7 +57,7 @@ from other_functions import *
 
 def main():
 
-    file_name = "DATA_007.bin"
+    file_name = "DATA_005.bin"
 
     with open(file_name, mode='rb') as log_data:
         data_bin = log_data.read()
