@@ -57,7 +57,7 @@ from other_functions import *
 
 def main():
 
-    file_name = "DATA_005.bin"
+    file_name = "logs/DATA_006.bin"
 
     with open(file_name, mode='rb') as log_data:
         data_bin = log_data.read()
