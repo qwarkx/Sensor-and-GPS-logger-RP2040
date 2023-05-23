@@ -1,6 +1,6 @@
 import struct
 
-from machine import SPI, I2C, Pin, Timer
+from machine import SPI, I2C, UART, Pin, Timer
 import machine
 # from machine import SDCard
 import os
@@ -14,6 +14,7 @@ import uctypes as c
 import sdcard
 from sensor_IMU import GY_86
 from bmp180 import BMP180
+from ublox_GPS import GPS
 #from data_packet import *
 import itertools as it
 
@@ -110,7 +111,7 @@ def read_IMU_sensor(pin):
     global sens_RDY_flag
     global time_stamp
     sens_RDY_flag = 1
-    # time_stamp = time_stamp + 1
+    time_stamp = time_stamp + 1
 # Sensor Pin interrupt
 imu_int = Pin(INT_PIN_IMU_sens, machine.Pin.IN)
 imu_int.irq(trigger=Pin.IRQ_RISING, handler=read_IMU_sensor)
@@ -235,8 +236,8 @@ def main():
     LED.value(1)
 
     print('* Initialising GPS ...')
-    gps_speed = 19200
-    # gps_speed = 115200
+    # gps_speed = 19200
+    gps_speed = 115200
     uart_com_gps = UART(1, baudrate = gps_speed, tx = Pin(8), rx = Pin(9))
 
     try:
@@ -350,19 +351,21 @@ def main():
         # if (message_updater_millis > 200):
         if GPS_Serial.read_GPS():
             # // GPS related information
-            gps_sens_data = (GPS_Serial.numSV, GPS_Serial.fixType, GPS_Serial.hMSL/1000.0, GPS_Serial.gSpeed*0.0036, GPS_Serial.lon/10000000.0, GPS_Serial.lat/10000000.0)
+            gps_sens_data = (GPS_Serial.numSV, GPS_Serial.fixType, GPS_Serial.hMSL/1000.0, GPS_Serial.gSpeed, GPS_Serial.lon/10000000.0, GPS_Serial.lat/10000000.0)
             #print(gps_sens_data)
 
         # FILL the BUFFER
         if sens_RDY_flag == 1:
-            
-            time_stamp = time.ticks_us()
+
             imu_sens_data = imu.read_sensors()
+
+            # time_stamp = time.ticks_cpu()
 
             # print(time_stamp, packet_counter, sample_counter, imu_sens_data, baro_sens_data)
             # buffer.add_data(time_stamp, packet_counter, imu_sens_data, baro_sens_data, gps_sens_data)
 
-            data = struct.pack('IHIHHHHHHHHHHfffBBdddd', time_stamp, sample_counter, sample_counter,
+            data = struct.pack('IIIHHHHHHHHHHfffBBdddd',
+                                time_stamp, sample_counter, sample_counter,
                                 imu_sens_data[0], imu_sens_data[1], imu_sens_data[2],
                                 imu_sens_data[4], imu_sens_data[5], imu_sens_data[6],
                                 imu_sens_data[7], imu_sens_data[8], imu_sens_data[9],
