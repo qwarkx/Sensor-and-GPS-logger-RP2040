@@ -20,8 +20,7 @@ from other_functions import *
     struct sd_data_handler{
         uint32_t timestamp;
         uint32_t packet_count;
-        uint32_t packet_count;
-        
+    
         //  Movement sensor data
         uint16_t gyiro_x[100];
         uint16_t gyiro_y[100];
@@ -34,9 +33,9 @@ from other_functions import *
         uint16_t mag_x[100];
         uint16_t mag_y[100];
         uint16_t mag_z[100];
-        uint16_t imu_temp;
     
         // Barometric presur
+        # uint16_t presure_raw[10];
         uint16_t presure_calculated[10];
         uint16_t temperature[10];
         uint16_t calculated_altitude[10];
@@ -57,7 +56,7 @@ from other_functions import *
 
 def main():
 
-    file_name = "logs/DATA_006.bin"
+    file_name = "logs/DATA_008.bin"
 
     with open(file_name, mode='rb') as log_data:
         data_bin = log_data.read()
@@ -82,6 +81,16 @@ def main():
         print("GPS_latitude:   " + str(full_data[0][-2]))
         print("GPS_longitude:  " + str(full_data[0][-1]))
 
+        store = 0
+
+        if store:
+            with open('proba_b.bin','wb') as file:
+                buffer = []
+                for i in range(0, len(full_data[0])):
+                    buffer.append(full_data[0:,i])
+                file.write(bytes(buffer))
+            print('finished conversion')
+
         longitude = []
         latitude = []
         speed = []
@@ -97,8 +106,8 @@ def main():
         ACCz = []
 
         timestamp = (full_data[0:, 0] / 1000000.0)
-        packet_counter = full_data[0:, 1]
-        sample_counter = full_data[0:, 2]
+        packet_counter = full_data[0:, 2]
+        sample_counter = full_data[0:, 1]
 
         see_hight = full_data[0:,-4]
         speed = full_data[0:, -3]
@@ -191,6 +200,7 @@ def main():
         # manager.full_screen_toggle()
 
         plt.savefig(file_name + '.png', dpi=640)
+
         plt.show()
 
         print("Finished analisation")
