@@ -18,7 +18,7 @@ class GPS():
         
         self.gps_seriall = serial_port
         self.gps_data_raw = []
-            
+        self.gps_data_size = 0
 
         
         self.cls = 0
@@ -75,11 +75,11 @@ class GPS():
                 payload_cpy = payload
                 #data_struct = '=LH5BBLlB2BB4l2L5lLLH6BlhH'            
                 data_struct = 'BBHLHBBBBBBLlBBBBllllLLlllllLLHhLlhH'
-                
-                #print('adatmeret:', int(struct.calcsize(data_struct)))
-                
+                # self.gps_data_size = struct.calcsize(data_struct)
+
                 self.cls, self.id, self.len, self.iTOW, self.year, self.month, self.day, self.hour, self.minute, self.second, self.valid, self.tAcc, self.nano, self.fixType, self.flags, self.flags2, self.numSV, self.lon, self.lat, self.height, self.hMSL, self.hAcc, self.vAcc, self.velN, self.velE, self.velD, self.gSpeed, self.headMot, self.sAcc, self.headAcc, self.pDOP, self.flags3, self.reserved1, self.headVeh, self.magDec, self.magAcc = struct.unpack(data_struct, payload_cpy)
 
+                # print(struct.unpack(data_struct, payload_cpy))
                 self.ubx_class = '01'
                 self.ubx_id = '07'
                 
@@ -134,11 +134,13 @@ class GPS():
 
 
 # GPS Testing
-#gps_baudrate = 115200
 
-#uart_com = UART(1, baudrate = gps_baudrate, tx = Pin(8), rx = Pin(9))
-#gp = GPS(uart_com)
-#
+# gps_speed = 19200
+# gps_speed = 115200
+
+# uart_com = UART(1, baudrate = gps_speed, tx = Pin(8), rx = Pin(9))
+# gps = GPS(uart_com)
+
 #while True:
     
     '''
@@ -150,13 +152,28 @@ class GPS():
                                                                                                 gps.satellites,
                                                                                                 gps.altitude_m))
     '''
-    #gp.read_GPS()
-    #
-    #print(gp.lat)
-    #print(gp.lon)
-    #print(gp.gps_data_raw)
-    #
-    #utime.sleep(1)
+
+    '''
+    try:
+        while (uart_com.any()):
+            data = uart_com.read(280)
+            print(str(len(data)))
+            print(data)
+            if data:
+                print('ok')
+            else:
+                print('nok')
+    except Exception as e:
+        print(e)
+    utime.sleep(1)
+    '''
+    # gps.read_GPS()
+    # print('--------------------------')
+    # print(gps.lat)
+    # print(gps.lon)
+    # print(gps.gps_data_raw)
+    # print('--------------------------')
+    # utime.sleep(1)
 
 
 

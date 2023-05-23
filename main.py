@@ -1,6 +1,6 @@
 import struct
 
-from machine import SPI, I2C, UART, Pin, Timer
+from machine import SPI, I2C, Pin, Timer
 import machine
 # from machine import SDCard
 import os
@@ -12,7 +12,6 @@ import uctypes as c
 
 #from dataclasses import dataclass
 import sdcard
-from ublox_GPS import GPS
 from sensor_IMU import GY_86
 from bmp180 import BMP180
 #from data_packet import *
@@ -221,9 +220,6 @@ def SD_Write_Start_Stop_control( sensor_data, sd_path = '/sd'):
             # print('close')
             myFile.flush()
             myFile.close()
-        
-        print('SD data write finished')
-            
 
 
 
@@ -231,29 +227,28 @@ def SD_Write_Start_Stop_control( sensor_data, sd_path = '/sd'):
 
 # OTHER initialisations
 
-baro_sens_data = []
-gps_sens_data = []
-
-
 def main():
 
     time.sleep(3)
     
     LED = Pin(25, machine.Pin.OUT)
     LED.value(1)
-    
+
     print('* Initialising GPS ...')
+    gps_speed = 19200
+    # gps_speed = 115200
+    uart_com_gps = UART(1, baudrate = gps_speed, tx = Pin(8), rx = Pin(9))
 
-    #gps_baudrate = 19200
-    gps_baudrate = 115200
-    uart_com_gps = UART(1, baudrate = gps_baudrate, tx = Pin(8), rx = Pin(9))
-    GPS_Serial = GPS(uart_com_gps)
-    time.sleep(1)
+    try:
+        GPS_Serial = GPS(uart_com_gps)
+        time.sleep(1)
+        GPS_Serial.read_GPS()
+        print(GPS_Serial.lat)
+        print(GPS_Serial.lon)
+        time.sleep(1)
 
-    GPS_Serial.read_GPS()
-    print(GPS_Serial.lon)
-    print(GPS_Serial.lat)
-
+    except Exception as e:
+       print('ERROR with the GPS')
     # // posible to increase the speed of GPS to 5Hz
     # GPS_Serial.write(UBLOX_INIT, sizeof(UBLOX_INIT));
     # //-----------------------------------------------------------------------------------
@@ -329,7 +324,7 @@ def main():
     global pin_sd_card_connected
     # // Desyncrhonize the beeps
     time.sleep(2)
-    
+
     LED.value(0)
 
     while True:
@@ -357,15 +352,14 @@ def main():
             # // GPS related information
             gps_sens_data = (GPS_Serial.numSV, GPS_Serial.fixType, GPS_Serial.hMSL/1000.0, GPS_Serial.gSpeed*0.0036, GPS_Serial.lon/10000000.0, GPS_Serial.lat/10000000.0)
             #print(gps_sens_data)
-            
+
         # FILL the BUFFER
         if sens_RDY_flag == 1:
             
             time_stamp = time.ticks_us()
             imu_sens_data = imu.read_sensors()
 
-            #print(time_stamp, packet_counter, sample_counter, imu_sens_data, baro_sens_data)
-            
+            # print(time_stamp, packet_counter, sample_counter, imu_sens_data, baro_sens_data)
             # buffer.add_data(time_stamp, packet_counter, imu_sens_data, baro_sens_data, gps_sens_data)
 
             data = struct.pack('IHIHHHHHHHHHHfffBBdddd', time_stamp, sample_counter, sample_counter,
@@ -378,7 +372,7 @@ def main():
                                 gps_sens_data[3], gps_sens_data[4], gps_sens_data[5])
 
             SD_Write_Start_Stop_control(data)
-            #time.sleep(1)
+
             sample_counter += 1
 
 
