@@ -12,6 +12,7 @@ import numpy as np
 
 from matplotlib.pyplot import plot, show
 import matplotlib.pyplot as plt
+from scipy.io import savemat
 
 from other_functions import *
 
@@ -20,7 +21,8 @@ from other_functions import *
     struct sd_data_handler{
         uint32_t timestamp;
         uint32_t packet_count;
-    
+        uint32_t packet_count;
+        
         //  Movement sensor data
         uint16_t gyiro_x[100];
         uint16_t gyiro_y[100];
@@ -33,9 +35,9 @@ from other_functions import *
         uint16_t mag_x[100];
         uint16_t mag_y[100];
         uint16_t mag_z[100];
+        uint16_t imu_temp;
     
         // Barometric presur
-        # uint16_t presure_raw[10];
         uint16_t presure_calculated[10];
         uint16_t temperature[10];
         uint16_t calculated_altitude[10];
@@ -52,13 +54,28 @@ from other_functions import *
     };
 """
 
+def export_sensor_data_mat(path, data, size, compression = 1):
+    print("Start exporting")
 
+    export_data = []
+    channel_number = 22
+    export_data = [data[0:, i] for i in range(0, channel_number)]
+    export_data = np.array(export_data)
+
+    if compression:
+        savemat(path, {'data': export_data}, appendmat=False, do_compression=True)
+    else:
+        savemat(path, {'data': export_data}, appendmat=False)
+
+    print("Finished exporting")
 
 def main():
+    file_path = "logs/"
+    file_name = "DATA_009"
+    file_extension = ".bin"
+    file = file_path + file_name + file_extension
 
-    file_name = "logs/DATA_008.bin"
-
-    with open(file_name, mode='rb') as log_data:
+    with open(file, mode='rb') as log_data:
         data_bin = log_data.read()
 
         # packet_structure = 'II100H100H100H100H100H100H100H100H100H10H10H10H10HBBdddd'
@@ -81,15 +98,11 @@ def main():
         print("GPS_latitude:   " + str(full_data[0][-2]))
         print("GPS_longitude:  " + str(full_data[0][-1]))
 
-        store = 0
+        exporter = 1
+        if exporter:
+            file_export_name = file_path + file_name + '_export_compressed.mat'
+            export_sensor_data_mat(file_export_name, full_data)
 
-        if store:
-            with open('proba_b.bin','wb') as file:
-                buffer = []
-                for i in range(0, len(full_data[0])):
-                    buffer.append(full_data[0:,i])
-                file.write(bytes(buffer))
-            print('finished conversion')
 
         longitude = []
         latitude = []
@@ -106,8 +119,8 @@ def main():
         ACCz = []
 
         timestamp = (full_data[0:, 0] / 1000000.0)
-        packet_counter = full_data[0:, 2]
-        sample_counter = full_data[0:, 1]
+        packet_counter = full_data[0:, 1]
+        sample_counter = full_data[0:, 2]
 
         see_hight = full_data[0:,-4]
         speed = full_data[0:, -3]
@@ -200,7 +213,6 @@ def main():
         # manager.full_screen_toggle()
 
         plt.savefig(file_name + '.png', dpi=640)
-
         plt.show()
 
         print("Finished analisation")
