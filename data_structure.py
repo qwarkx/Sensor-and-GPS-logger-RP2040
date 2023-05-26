@@ -1,38 +1,66 @@
 
 import uctypes as c
+'''
+timestamp: list[c.uint32_t]
+packet_count: list[c.uint32_t]
+sample_counter: list[c.uint32_t]
 
+gyro_x: list[c.uint16_t]
+gyro_y: list[c.uint16_t]
+gyro_z: list[c.uint16_t]
 
+acc_x: list[c.uint16_t]
+acc_y: list[c.uint16_t]
+acc_z: list[c.uint16_t]
+
+mag_x: list[c.uint16_t]
+mag_y: list[c.uint16_t]
+mag_z: list[c.uint16_t]
+temp_imu: list[c.uint16_t]
+
+presure_calculated: list[float]
+temperature: list[float]
+calculated_altitude: list[float]
+
+num_satelites: list[c.uint8_t]
+fix_type: list[c.uint8_t]
+
+hight_abobe_see_level: list[c.double]
+ground_speed: list[c.double]
+gps_long: list[c.double]
+gps_lat: list[c.double]
+'''
 class DataPoint:
-    timestamp: list[c.int32_t]
-    packet_count: list[c.int16_t]
-    sample_counter: list[c.int32_t]
+    timestamp: c.uint32_t
+    packet_count: c.uint32_t
+    sample_counter: c.uint32_t
     
-    gyro_x: list[c.uint16_t]
-    gyro_y: list[c.uint16_t]
-    gyro_z: list[c.uint16_t]
+    gyro_x: c.int16_t
+    gyro_y: c.int16_t
+    gyro_z: c.int16_t
 
-    acc_x: list[c.uint16_t]
-    acc_y: list[c.uint16_t]
-    acc_z: list[c.uint16_t]
+    acc_x: c.int16_t
+    acc_y: c.int16_t
+    acc_z: c.int16_t
 
-    mag_x: list[c.uint16_t]
-    mag_y: list[c.uint16_t]
-    mag_z: list[c.uint16_t]
-    temp_imu: list[c.uint16_t]
+    mag_x: c.int16_t
+    mag_y: c.int16_t
+    mag_z: c.int16_t
+    temp_imu: c.int16_t
     
-    presure_calculated: list[float]
-    temperature: list[float]
-    calculated_altitude: list[float]
+    presure_calculated: float
+    temperature: float
+    calculated_altitude: float
 
-    num_satelites: list[c.uint8_t]
-    fix_type: list[c.uint8_t]
+    num_satelites: c.uint8_t
+    fix_type: c.uint8_t
 
-    hight_abobe_see_level: list[c.double]
-    ground_speed: list[c.double]
-    gps_long: list[c.double]
-    gps_lat: list[c.double]
+    hight_abobe_see_level: c.double
+    ground_speed: c.double
+    gps_long: c.double
+    gps_lat: c.double
 
-    def add_data_experimental(self, timestamp: c.int32_t, packet_count: c.int16_t, sample_counter: c.int32_t,
+    def add_data_experimental(self, timestamp: c.uint32_t, packet_count: c.uint32_t, sample_counter: c.uint32_t,
                               imu_data: list[c.uint16_t],
                               baro_data: list[float],
                               num_satelites: c.int8_t, fix_type: c.int8_t,

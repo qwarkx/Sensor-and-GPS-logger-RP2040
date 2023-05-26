@@ -12,6 +12,7 @@ import uctypes as c
 
 #from dataclasses import dataclass
 import sdcard
+# from machine import SDCard
 from sensor_IMU import GY_86
 from bmp180 import BMP180
 from ublox_GPS import GPS
@@ -364,7 +365,8 @@ def main():
             # print(time_stamp, packet_counter, sample_counter, imu_sens_data, baro_sens_data)
             # buffer.add_data(time_stamp, packet_counter, imu_sens_data, baro_sens_data, gps_sens_data)
 
-            data = struct.pack('IIIHHHHHHHHHHfffBBdddd',
+            # data = struct.pack('IIIHHHHHHHHHHfffBBdddd',
+            data = struct.pack(  'IIIhhhhhhhhhhfffBBdddd',
                                 time_stamp, packet_counter, sample_counter,
                                 imu_sens_data[0], imu_sens_data[1], imu_sens_data[2],
                                 imu_sens_data[4], imu_sens_data[5], imu_sens_data[6],

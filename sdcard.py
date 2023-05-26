@@ -34,7 +34,8 @@ _TOKEN_DATA = const(0xFE)
 
 
 class SDCard():
-    def __init__(self, spi, cs, baudrate=1320000):
+    # def __init__(self, spi, cs, baudrate=1320000):
+    def __init__(self, spi, cs, baudrate=5280000):
         self.spi = spi
         self.cs = cs
 
