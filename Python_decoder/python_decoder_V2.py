@@ -80,7 +80,7 @@ def export_sensor_data_mat(path, data, channel_names, channel_number = 22, compr
 
 def main():
     file_path = "logs/"
-    file_name = "DATA_012"
+    file_name = "DATA_013"
     file_extension = ".bin"
     file = file_path + file_name + file_extension
 
@@ -156,9 +156,9 @@ def main():
         gps_data = tuple(zip(latitude, longitude))
 
 
-        ACC_all = removeDC(np.array([full_data[0:, 3], full_data[0:, 4], full_data[0:, 5]], dtype='i2')  / 8)
-        GYRO_all = removeDC(np.array([full_data[0:, 6], full_data[0:, 7], full_data[0:, 8]], dtype='i2') / 2000)
-        MAG_all = removeDC(np.array([full_data[0:, 9], full_data[0:, 10], full_data[0:, 11]], dtype='i4')/ 2.5)
+        ACC_all = removeDC(np.array([full_data[0:, 3], full_data[0:, 4], full_data[0:, 5]], dtype='i2') )  #/8
+        GYRO_all = removeDC(np.array([full_data[0:, 6], full_data[0:, 7], full_data[0:, 8]], dtype='i2') )  #/2000
+        MAG_all = removeDC(np.array([full_data[0:, 9], full_data[0:, 10], full_data[0:, 11]], dtype='i2'))  #/2.5
 
         plt.subplot(2, 4, 1)
         plt.title('GPS Plot')

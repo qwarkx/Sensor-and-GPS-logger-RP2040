@@ -61,35 +61,31 @@ sd_card_init_required = 0
 myFile = None
 
 def Initialise_SD_CARD( spi_interface, sd_cs_pin, sd_path = '/sd', timeout = 2):
-    global sd_card_init_required
-
     sd_mount_path = sd_path
     init_timeout = 0
-    status = False
+    status = 0
 
     while init_timeout < timeout:
         try:
             sd_card_class = sdcard.SDCard(spi_interface, sd_cs_pin)
             uos.mount(sd_card_class, sd_mount_path)
-
-            sd_card_init_required = 0
-            status = True
+            status = 1
 
             print('SD card initialised')
         except Exception as e:
-            print('Not able to initialised SD card')
+            print('Not able to initialised SD card see details: ', e)
             sd_card_init_required = 1
-            status = False
+            status = 0
 
         time.sleep(1)
 
-        if status == False:
-            time.sleep_ms(400)
+        if status == 0:
+            time.sleep(1)
             init_timeout += 1
-        elif status == True:
-            return True, sd_mount_path, 0
+        elif status == 1:
+            return status, sd_mount_path, sd_card_class
 
-    return False, 0, 0
+    return status, sd_mount_path, sd_card_class
 
 def SDtimer_interrupt_callback(timer):
     global pin_sd_card_connected
@@ -219,9 +215,9 @@ def SD_Write_Start_Stop_control( sensor_data, sd_path = '/sd'):
         SD_fileOpen_flags = 0
         # print('up')
         if myFile is not None:
-            # print('close')
             myFile.flush()
             myFile.close()
+            print('SD Write finished')
 
 
 
@@ -231,32 +227,32 @@ def SD_Write_Start_Stop_control( sensor_data, sd_path = '/sd'):
 
 def main():
 
-    time.sleep(3)
-    
+    # Sleep litle bit before start
+    time.sleep(1)
+
+    # Initialise Information PIN
     LED = Pin(25, machine.Pin.OUT)
     LED.value(1)
 
-    print('* Initialising GPS ...')
+    # -----------------------------------------------------------------------------------
+
+    print('* Initialising UART interface and GPS ...')
     # gps_speed = 19200
     gps_speed = 115200
     uart_com_gps = UART(1, baudrate = gps_speed, tx = Pin(8), rx = Pin(9))
-
     try:
+        # GPS setup
         GPS_Serial = GPS(uart_com_gps)
         time.sleep(1)
         GPS_Serial.read_GPS()
-        print(GPS_Serial.lat)
-        print(GPS_Serial.lon)
         time.sleep(1)
-
     except Exception as e:
        print('ERROR with the GPS')
-    # // posible to increase the speed of GPS to 5Hz
-    # GPS_Serial.write(UBLOX_INIT, sizeof(UBLOX_INIT));
-    # //-----------------------------------------------------------------------------------
+
+    # -----------------------------------------------------------------------------------
 
     # SD card setup
-    print('* Initialising SD CARD ...')
+    print('* Initialising SD CARD SPI interface ...')
     SD_CARD_CS = 15
     sd_cs = Pin(SD_CARD_CS, Pin.OUT)
 
@@ -273,66 +269,67 @@ def main():
                       mosi=machine.Pin(11),
                       miso=machine.Pin(12))
 
-    status = bool
-    sd_path = ''
-    other = 0
-    status, sd_path, other = Initialise_SD_CARD(spi, sd_cs, '/sd', timeout=2)
-
+    print('* Initialising SD CARD ...')
+    status, sd_path, sd_cls = Initialise_SD_CARD(spi, sd_cs, '/sd', timeout=2)
     if status:
         sd_card_init_required = 0
     else:
         sd_card_init_required = 1
+    print('* SD CARD Finished config')
+    time.sleep(1)
 
-    print('Storage interface Finished config')
+    # -----------------------------------------------------------------------------------
 
-    time.sleep(3)
+    # SETUP Barometer tio get altitude
+    try:
+        print('BARO init STARTED')
+        baro = BMP180(interface=0, scl=21, sda=20, frq=400000,  baseline=101325.0, oversample=3)
+        print('BARO init Finished')
+    except Exception as e:
+        print('Something happened in the initialisation of the Barometer', e)
+    # Give some Delay
+    time.sleep(1)
 
-    # //-----------------------------------------------------------------------------------
+    # -----------------------------------------------------------------------------------
 
-    # // SETUP Barometer tio get altitude
-    print('BARO init STARTED')
-    baro = BMP180(interface=0, scl=21, sda=20, frq=400000,  baseline=101325.0, oversample=3)
-    print('BARO init END')
-
-    time.sleep(10)
-    # // Start setup the sensors to gather data
-
+    # // Start the setup of the IMU sensors
     imu = GY_86(interface=0, scl=21, sda=20, frq=400000)
     # accX, accY, accZ, Temp, gyX, gyY, gyZ, magX, magY, magZ = 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
     # sens_data = []
     # imu.read_sensors()
 
-	# Imu initialisation
-    if (imu.GY_ACC_MAG_Init()):
+    # Imu initialisation
+    if imu.GY_ACC_MAG_Init():
         print('IMU init OK')
     else:
         print('IMU init NOT OK')
- 
+
+    # -----------------------------------------------------------------------------------
 
     # OTHER initialisations
     #buffer_size = 100
     #buffer = CircularBuffer(buffer_size)
 
-
-    imu_sens_data = bytearray(20)
     baro_sens_data = []
     gps_sens_data = []
     
     global packet_counter
     global sample_counter
     global time_stamp
-
     global sd_card_init
     global pin_sd_card_connected
-    # // Desyncrhonize the beeps
-    time.sleep(2)
 
+    # Give some delay
+    time.sleep(0.5)
+
+    # Disable LED to show Configuration ended
     LED.value(0)
 
     while True:
 
         if pin_sd_card_connected == 0 and sd_card_init_required == 1:
-            status, sd_path, other = Initialise_SD_CARD(spi, sd_cs, '/sd', timeout=2)
+            sd_status, sd_path, sd_cls = Initialise_SD_CARD(spi, sd_cs, '/sd', timeout=2)
+            sd_card_init_required = sd_status
 
         if SD_Write_data:
             LED.value(1)
@@ -345,25 +342,23 @@ def main():
             alt = baro.altitude
             baro_sens_data = (temperature, presure, alt)
         except Exception as e:
-            print(e)
+            print('Something happened while reading the BAROMETER : ', e)
             LED.value(1)
 
         # USE GPS to read data from the module
-        # if (message_updater_millis > 200):
         if GPS_Serial.read_GPS():
             # // GPS related information
             gps_sens_data = (GPS_Serial.numSV, GPS_Serial.fixType, GPS_Serial.hMSL/1000.0, GPS_Serial.gSpeed, GPS_Serial.lon/10000000.0, GPS_Serial.lat/10000000.0)
-            #print(gps_sens_data)
 
         # FILL the BUFFER
         if sens_RDY_flag == 1:
 
             imu_sens_data = imu.read_sensors()
-
             packet_counter = time.ticks_cpu()
 
             # print(time_stamp, packet_counter, sample_counter, imu_sens_data, baro_sens_data)
             # buffer.add_data(time_stamp, packet_counter, imu_sens_data, baro_sens_data, gps_sens_data)
+            #print(str(imu_sens_data[7]), str(imu_sens_data[8]), str(imu_sens_data[9]))
 
             # data = struct.pack('IIIHHHHHHHHHHfffBBdddd',
             data = struct.pack(  'IIIhhhhhhhhhhfffBBdddd',
@@ -375,9 +370,13 @@ def main():
                                 baro_sens_data[0], baro_sens_data[1], baro_sens_data[2],
                                 gps_sens_data[0], gps_sens_data[1], gps_sens_data[2],
                                 gps_sens_data[3], gps_sens_data[4], gps_sens_data[5])
+            
 
             SD_Write_Start_Stop_control(data)
 
+            # time_meaure =  time.ticks_us()
+            #print(str(time.ticks_us()-time_meaure))
+            
             sample_counter += 1
 
 
