@@ -64,26 +64,20 @@ def Initialise_SD_CARD( spi_interface, sd_cs_pin, sd_path = '/sd', timeout = 2):
     sd_mount_path = sd_path
     init_timeout = 0
     status = 0
+    sd_card_class = None
 
     while init_timeout < timeout:
         try:
             sd_card_class = sdcard.SDCard(spi_interface, sd_cs_pin)
             uos.mount(sd_card_class, sd_mount_path)
             status = 1
-
             print('SD card initialised')
+            break
         except Exception as e:
-            print('Not able to initialised SD card see details: ', e)
-            sd_card_init_required = 1
-            status = 0
-
-        time.sleep(1)
-
-        if status == 0:
-            time.sleep(1)
+            print('Failed to initialize SD card: ', e)
+            sd_card_class = None
             init_timeout += 1
-        elif status == 1:
-            return status, sd_mount_path, sd_card_class
+            time.sleep(1)
 
     return status, sd_mount_path, sd_card_class
 
@@ -271,10 +265,7 @@ def main():
 
     print('* Initialising SD CARD ...')
     status, sd_path, sd_cls = Initialise_SD_CARD(spi, sd_cs, '/sd', timeout=2)
-    if status:
-        sd_card_init_required = 0
-    else:
-        sd_card_init_required = 1
+    sd_card_init_required = status
     print('* SD CARD Finished config')
     time.sleep(1)
 

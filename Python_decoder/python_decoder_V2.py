@@ -80,7 +80,7 @@ def export_sensor_data_mat(path, data, channel_names, channel_number = 22, compr
 
 def main():
     file_path = "logs/"
-    file_name = "DATA_013"
+    file_name = "DATA_014"
     file_extension = ".bin"
     file = file_path + file_name + file_extension
 
@@ -148,8 +148,8 @@ def main():
         gps_fix_type = np.array(full_data[0:, 17], dtype='i1')
 
         see_hight = np.array(full_data[0:, -4], dtype='f')
-        # speed = np.array(full_data[0:, -3], dtype='d') * 0.0036  # Convert to km/h
-        speed = np.array(full_data[0:, -3], dtype='f')  # Convert to km/h
+        speed = np.array(full_data[0:, -3], dtype='d') * 0.0036  # Convert to km/h
+        # speed = np.array(full_data[0:, -3], dtype='f')  # Convert to km/h
 
         longitude = np.array(full_data[0:, -2], dtype='c16')  # c16
         latitude = np.array(full_data[0:, -1], dtype='c16')

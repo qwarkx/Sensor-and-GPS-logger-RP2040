@@ -396,12 +396,12 @@ class GY_86(object):
                           fsr)
 
     def read_sensors(self):
-        self.bus.readfrom_mem_into(MPU6050_I2C_ADDRES,
-                                   MPU6050_ACCEL_XOUT_H,
-                                   self.sensors)
-
-        data = unpack('>hhhhhhhhhh', self.sensors)
-
+        data = ()
+        try:
+            self.bus.readfrom_mem_into(MPU6050_I2C_ADDRES, MPU6050_ACCEL_XOUT_H, self.sensors)
+            data = unpack('>hhhhhhhhhh', self.sensors)
+        except Exception as e:
+            print('Could not unpack the read sensor data see: ', e)
         return data
 
 
