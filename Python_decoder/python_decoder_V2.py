@@ -80,7 +80,7 @@ def export_sensor_data_mat(path, data, channel_names, channel_number = 22, compr
 
 def main():
     file_path = "logs/"
-    file_name = "DATA_014"
+    file_name = "DATA_032"
     file_extension = ".bin"
     file = file_path + file_name + file_extension
 
@@ -115,10 +115,17 @@ def main():
 
             data_designators = ['timestamp', 'system_cpu_ticks', 'sd_write_counter',
                                 'ACCx', 'ACCy', 'ACCz', 'GYx', 'GYy', 'GYz', 'MAGx', 'MAGy', 'MAGz',
-                                'IMU_TEMP', 'BARO_TEMP', 'BARO_ALTITUDE',
+                                'IMU_TEMP',
+                                'BARO_PRESURE', 'BARO_TEMP', 'BARO_ALTITUDE',
                                 'GPS_NUM_SAT', 'GPS_FIX_TYPE', 'GPS_SEE_HIGHT', 'GPS_SPEED_m/s', 'GPS_LONG', 'GPS_LAT']
 
-            export_sensor_data_mat(file_export_name, full_data, data_designators, data_channel_number)
+            data_measurement = ['ms', 'us', 'count',
+                                'ACCx', 'ACCy', 'ACCz', 'GYx', 'GYy', 'GYz', 'MAGx', 'MAGy', 'MAGz',
+                                'IMU_TEMP',
+                                'BARO_PRESURE', 'BARO_TEMP', 'BARO_ALTITUDE',
+                                'sat_number', 'fix_type', 'GPS_SEE_HIGHT', 'm/s', 'GPS_LONG', 'GPS_LAT']
+
+            export_sensor_data_mat(file_export_name, full_data[50:], data_designators, data_channel_number)
 
         longitude = []
         latitude = []

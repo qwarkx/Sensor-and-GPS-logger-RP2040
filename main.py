@@ -69,7 +69,7 @@ def Initialise_SD_CARD( spi_interface, sd_cs_pin, sd_path = '/sd', timeout = 2):
     while init_timeout < timeout:
         try:
             sd_card_class = sdcard.SDCard(spi_interface, sd_cs_pin)
-            uos.mount(sd_card_class, sd_mount_path)
+            os.mount(sd_card_class, sd_mount_path)
             status = 1
             print('SD card initialised')
             break
@@ -132,7 +132,7 @@ def generate_log_file_name():
 
 def file_or_dir_exists(filename, path):
     try:
-        if filename in uos.listdir(path):
+        if filename in os.listdir(path):
             return True
         else:
             return False
@@ -232,7 +232,8 @@ def main():
 
     print('* Initialising UART interface and GPS ...')
     # gps_speed = 19200
-    gps_speed = 115200
+    #gps_speed = 115200
+    gps_speed = 230400
     uart_com_gps = UART(1, baudrate = gps_speed, tx = Pin(8), rx = Pin(9))
     try:
         # GPS setup
@@ -301,14 +302,16 @@ def main():
     #buffer_size = 100
     #buffer = CircularBuffer(buffer_size)
 
-    baro_sens_data = []
-    gps_sens_data = []
-    
+    baro_sens_data = (0,0,0)
+    gps_sens_data = (0,0,0,0,0,0)
+    imu_sens_data = (0,0,0,0,0,0,0,0,0,0)
+
     global packet_counter
     global sample_counter
     global time_stamp
     global sd_card_init
     global pin_sd_card_connected
+    # global imu_sens_data
 
     # Give some delay
     time.sleep(0.5)
@@ -328,10 +331,11 @@ def main():
             LED.value(0)
 
         try:
-            temperature = baro.temperature
-            presure = baro.pressure
-            alt = baro.altitude
-            baro_sens_data = (temperature, presure, alt)
+            #temperature = baro.temperature
+            #presure = baro.pressure
+            #salt = baro.altitude
+            #baro_sens_data = (temperature, presure, alt)
+            baro_sens_data = (0, 0, 0)
         except Exception as e:
             print('Something happened while reading the BAROMETER : ', e)
             LED.value(1)
@@ -347,24 +351,28 @@ def main():
             imu_sens_data = imu.read_sensors()
             packet_counter = time.ticks_cpu()
 
-            # print(time_stamp, packet_counter, sample_counter, imu_sens_data, baro_sens_data)
-            # buffer.add_data(time_stamp, packet_counter, imu_sens_data, baro_sens_data, gps_sens_data)
+            time.sleep(2)
+            print(time_stamp, packet_counter, sample_counter, imu_sens_data, baro_sens_data)
+            print(gps_sens_data)
+            #buffer.add_data(time_stamp, packet_counter, imu_sens_data, baro_sens_data, gps_sens_data)
             #print(str(imu_sens_data[7]), str(imu_sens_data[8]), str(imu_sens_data[9]))
 
-            # data = struct.pack('IIIHHHHHHHHHHfffBBdddd',
-            data = struct.pack(  'IIIhhhhhhhhhhfffBBdddd',
-                                time_stamp, packet_counter, sample_counter,
-                                imu_sens_data[0], imu_sens_data[1], imu_sens_data[2],
-                                imu_sens_data[4], imu_sens_data[5], imu_sens_data[6],
-                                imu_sens_data[7], imu_sens_data[8], imu_sens_data[9],
-                                imu_sens_data[3],
-                                baro_sens_data[0], baro_sens_data[1], baro_sens_data[2],
-                                gps_sens_data[0], gps_sens_data[1], gps_sens_data[2],
-                                gps_sens_data[3], gps_sens_data[4], gps_sens_data[5])
-            
+            try:
+                # data = struct.pack('IIIHHHHHHHHHHfffBBdddd',
+                data = struct.pack(  'IIIhhhhhhhhhhfffBBdddd',
+                                    time_stamp, packet_counter, sample_counter,
+                                    imu_sens_data[0], imu_sens_data[1], imu_sens_data[2],
+                                    imu_sens_data[4], imu_sens_data[5], imu_sens_data[6],
+                                    imu_sens_data[7], imu_sens_data[8], imu_sens_data[9],
+                                    imu_sens_data[3],
+                                    baro_sens_data[0], baro_sens_data[1], baro_sens_data[2],
+                                    gps_sens_data[0], gps_sens_data[1], gps_sens_data[2],
+                                    gps_sens_data[3], gps_sens_data[4], gps_sens_data[5])
+                
 
-            SD_Write_Start_Stop_control(data)
-
+                SD_Write_Start_Stop_control(data)
+            except Exception as e:
+                print('Data SD write Issue: ',e)
             # time_meaure =  time.ticks_us()
             #print(str(time.ticks_us()-time_meaure))
             

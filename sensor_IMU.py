@@ -396,7 +396,7 @@ class GY_86(object):
                           fsr)
 
     def read_sensors(self):
-        data = ()
+        data = (0,0,0,0,0,0,0,0,0,0)
         try:
             self.bus.readfrom_mem_into(MPU6050_I2C_ADDRES, MPU6050_ACCEL_XOUT_H, self.sensors)
             data = unpack('>hhhhhhhhhh', self.sensors)

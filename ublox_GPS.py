@@ -78,7 +78,8 @@ class GPS():
                 # self.gps_data_size = struct.calcsize(data_struct)
 
                 self.cls, self.id, self.len, self.iTOW, self.year, self.month, self.day, self.hour, self.minute, self.second, self.valid, self.tAcc, self.nano, self.fixType, self.flags, self.flags2, self.numSV, self.lon, self.lat, self.height, self.hMSL, self.hAcc, self.vAcc, self.velN, self.velE, self.velD, self.gSpeed, self.headMot, self.sAcc, self.headAcc, self.pDOP, self.flags3, self.reserved1, self.headVeh, self.magDec, self.magAcc = struct.unpack(data_struct, payload_cpy)
-
+                
+                #print(self.gps_data_raw)
                 # print(struct.unpack(data_struct, payload_cpy))
                 self.ubx_class = '01'
                 self.ubx_id = '07'
@@ -135,11 +136,12 @@ class GPS():
 
 # GPS Testing
 
-# gps_speed = 19200
-# gps_speed = 115200
+#gps_speed = 19200
+#gps_speed = 115200
+#gps_speed = 230400
 
-# uart_com = UART(1, baudrate = gps_speed, tx = Pin(8), rx = Pin(9))
-# gps = GPS(uart_com)
+#uart_com = UART(1, baudrate = gps_speed, tx = Pin(8), rx = Pin(9))
+#gps = GPS(uart_com)
 
 #while True:
     
@@ -167,13 +169,13 @@ class GPS():
         print(e)
     utime.sleep(1)
     '''
-    # gps.read_GPS()
+    #gps.read_GPS()
     # print('--------------------------')
-    # print(gps.lat)
-    # print(gps.lon)
+    #print(gps.lat)
+    #print(gps.lon)
     # print(gps.gps_data_raw)
     # print('--------------------------')
-    # utime.sleep(1)
+    #utime.sleep(1)
 
 
 
